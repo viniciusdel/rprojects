@@ -1,0 +1,122 @@
+---
+title: "R Notebook"
+output: html_notebook
+author: "Vinicius Seixas"
+---
+
+```{r}
+library(caret)
+```
+
+```{r}
+# define the filename
+filename <- "mushrooms.csv"
+# load the CSV file from the local directory
+dataset <- read.csv(filename, header=FALSE)
+# set the column names in the dataset
+colnames(dataset) <- c("class", "cap-shape", "cap-surface", "cap-color", "bruises", "odor", "gill-attachment", "gill-spacing", "gill-size", "gill-color", "stalk-shape", "stalk-root", "stalk-surface-above-ring", "stalk-surface-below-ring", "stalk-color-above-ring", "stalk-color-below-ring", "veil-type", "veil-color", "ring-number", "ring-type", "spore-print-color", "population", "habitat")
+```
+
+
+```{r}
+# create a list of 80% of the rows in the original dataset we can use for training
+validation_index <- createDataPartition(dataset$class, p=0.80, list=FALSE)
+
+# select 20% of the data for validation
+validation <- dataset[-validation_index,]
+
+# use the remaining 80% of data to training and testing the models
+dataset <- dataset[validation_index,]
+```
+
+```{r}
+# take a peek at the first 5 rows of the data
+head(dataset)
+```
+
+```{r}
+# split input and output
+x <- dataset[,2:23]
+y <- dataset[,1]
+
+#plot(y)
+```
+
+
+```{r}
+# Run algorithms using 10-fold cross validation
+control <- trainControl(method="cv", number=10)
+metric <- "Accuracy"
+```
+
+```{r}
+# a) linear algorithms
+set.seed(7)
+fit.lda <- train(class~., data=dataset, method="lda", metric=metric, trControl=control)
+
+ #b) nonlinear algorithms
+ #CART
+set.seed(7)
+fit.cart <- train(class~., data=dataset, method="rpart", metric=metric, trControl=control)
+
+# kNN
+set.seed(7)
+fit.knn <- train(class~., data=dataset, method="knn", metric=metric, trControl=control)
+
+# c) advanced algorithms
+# SVM
+set.seed(7)
+fit.svm <- train(class~., data=dataset, method="svmRadial", metric=metric, trControl=control)
+
+# Random Forest
+#set.seed(7)
+#fit.rf <- train(class~., data=dataset, method="rf", metric=metric, trControl=control)
+```
+
+```{r}
+# Neural Network
+set.seed(7)
+fit.nnet <- train(class~., data=dataset, method="nnet", metric=metric, trControl=control, linout=TRUE, trace = FALSE);
+```
+
+```{r}
+set.seed(7)
+fit.mlp <- train(class~., data=dataset, method="mlp", metric=metric, trControl=control, linout=TRUE, trace = FALSE)
+```
+
+
+```{r}
+# summarize accuracy of models
+#results <- resamples(list(lda=fit.lda, cart=fit.cart, knn=fit.knn, svm=fit.svm, rf=fit.rf, nnet = fit.nnet))
+results <- resamples(list(knn=fit.knn, svm=fit.svm, mlp=fit.mlp))
+summary(results)
+```
+
+```{r}
+# summarize Best Model
+print(fit.mlp)
+```
+
+```{r}
+# estimate skill of LDA on the validation dataset
+predictions <- predict(fit.svm, validation)
+confusionMatrix(predictions, validation$class)
+```
+
+
+```{r}
+predict(fit.svm, c())
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+
+
